@@ -23,28 +23,35 @@ enum layer_number {
 
 enum custom_keycodes {
   RGB_RST = SAFE_RANGE,
+
+  CK_C_CAPS,      // 長押しCtrl, 単押しCapsLock
+  CK_SPC_MHN,     // 長押しSpace, 単押し無変換
+
+  // 長押しLayer, 単押しキー
+  CK_SBL_SPC,
+  CK_ARW_ENT,
 };
 
-// tmp
-#define CK_SBL_SPC LT(_SYMBOL, KC_SPC)
-#define CK_ARW_ENT LT(_ARROW,  KC_ENT)
-
 // ショートカット
+#define CK_ZKHK LALT(KC_GRV)  // 全角半角
 #define sPAUSE LCA(KC_P)      // Ctrl+Alt+P     最前面でポーズ
 #define sCAHOME LCA(KC_HOME)  // Ctrl+Alt+HOME  リモートの接続バーを表示
+
+uint16_t hold_timers[MATRIX_ROWS][MATRIX_COLS];
+bool layer_pressed[4] = {false};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [_QWERTY] = LAYOUT(
   //,-----------------------------------------------------|   |--------------------------------------------------------------------------------.
-      KC_ZKHK,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0, sCAHOME,  sPAUSE, XXXXXXX, KC_BSPC,
+      CK_ZKHK,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0, sCAHOME,  sPAUSE, XXXXXXX, KC_BSPC,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------+--------|
        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_LBRC, KC_RBRC, KC_JYEN,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------|
-     KC_LCTRL,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,        KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,  KC_ENT,
+    CK_C_CAPS,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,        KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,  KC_ENT,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------|
       KC_LSFT,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_RSFT,  KC_DEL,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------|
-               KC_LGUI, KC_LALT,  KC_SPC, CK_SBL_SPC,        CK_ARW_ENT,MO(_NUM),          KC_RALT,  KC_APP 
+               KC_LGUI, KC_LALT,CK_SPC_MHN, CK_SBL_SPC,      CK_ARW_ENT,MO(_NUM),          KC_RALT,  KC_APP 
           //`---------------------------------------------|   |--------------------------------------------'
   ),
 
@@ -91,6 +98,55 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   )
 };
 
+// CapsLock　単押し
+void set_caps(void) {
+  register_code(KC_LSFT);
+  register_code(KC_CAPS);
+  unregister_code(KC_CAPS);
+  unregister_code(KC_LSFT);
+}
+
+// 無変換　単押し
+void set_mhen(void) {
+  register_code(KC_MHEN);
+  unregister_code(KC_MHEN);
+};
+
+// 単押しかどうかの判定
+bool is_tap (keyrecord_t *record) {
+  return hold_timers[record->event.key.row][record->event.key.col]
+  && timer_elapsed(hold_timers[record->event.key.row][record->event.key.col]) < TAPPING_TERM;
+}
+
+// 長押しと単押しでキーを変更する
+void mod_tap_action(keyrecord_t *record, uint8_t mod, void (*cb)(void)) {
+  if (record->event.pressed) {
+    add_mods(MOD_BIT(mod));
+  } else {
+    if (is_tap(record)) {
+      del_mods(MOD_BIT(mod));
+      cb();
+    } else {
+      unregister_code(mod);
+    }
+  }
+}
+
+// 長押しでレイヤー移動、単押しでキー入力
+void my_LT(keyrecord_t *record, uint8_t layer, uint8_t tap) {
+  if (record->event.pressed) {
+    layer_pressed[layer] = true;
+    layer_on(layer);
+  } else {
+    layer_off(layer);
+    if (layer_pressed[layer] && is_tap(record)) {
+      register_code(tap);
+      unregister_code(tap);
+    }
+    layer_pressed[layer] = false;
+  }
+}
+
 
 //A description for expressing the layer position in LED mode.
 layer_state_t layer_state_set_user(layer_state_t state) {
@@ -118,8 +174,9 @@ int RGB_current_mode;
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   bool result = false;
 
-  if (!twpair_on_jis(keycode, record))
-    return false;
+  if (record->event.pressed) {
+    hold_timers[record->event.key.row][record->event.key.col] = timer_read();
+  }
 
   switch (keycode) {
     #ifdef RGBLIGHT_ENABLE
@@ -138,10 +195,29 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           }
         break;
     #endif
+    case CK_C_CAPS:     // 長押し"Ctrl", 単押し"CapsLock"
+      mod_tap_action(record, KC_LCTL, set_caps);
+      result = false;
+      break;
+    case CK_SPC_MHN:    // 長押し"Space", 単押し"無変換"
+      mod_tap_action(record, KC_LCTL, set_mhen);
+      result = false;
+      break;
+    case CK_SBL_SPC:    // 長押し"_SYMBOL"レイヤー, 単押し"Space"
+      my_LT(record, _SYMBOL, KC_SPC);
+      result = false;
+      break;
+    case CK_ARW_ENT:    // 長押し"_ARROW", 単押し"Enter"
+      my_LT(record, _ARROW, KC_ENT);
+      result = false;
+      break;
     default:
       result = true;
       break;
   }
+
+  if (!twpair_on_jis(keycode, record))
+    return false;
 
   return result;
 }

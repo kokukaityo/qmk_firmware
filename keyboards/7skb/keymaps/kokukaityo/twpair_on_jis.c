@@ -42,7 +42,7 @@ const uint16_t us2jis[][2] = {
   {KC_COLN, JP_COLN},
   {KC_UNDS, JP_UNDS},
   {KC_PIPE, JP_PIPE},
-  {KC_DQT,  JP_QUOT},
+  {KC_DQT,  JP_DQUO},
   {KC_ASTR, JP_ASTR},
   {KC_TILD, JP_TILD},
   {KC_AMPR, JP_AMPR},
