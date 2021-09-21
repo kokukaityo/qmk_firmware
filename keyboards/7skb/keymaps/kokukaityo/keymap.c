@@ -38,7 +38,8 @@ enum custom_keycodes {
 #define sCAHOME LCA(KC_HOME)  // Ctrl+Alt+HOME  リモートの接続バーを表示
 
 uint16_t hold_timers[MATRIX_ROWS][MATRIX_COLS];
-bool layer_pressed[4] = {false};
+//bool layer_pressed[4] = {false};
+bool key_pressed[MATRIX_ROWS][MATRIX_COLS] = {false};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [_QWERTY] = LAYOUT(
@@ -112,6 +113,10 @@ void set_mhen(void) {
   unregister_code(KC_MHEN);
 };
 
+// 押されていたかどうかの判定
+bool is_pressed (keyrecord_t *record) {
+  return key_pressed[record->event.key.row][record->event.key.col];
+}
 // 単押しかどうかの判定
 bool is_tap (keyrecord_t *record) {
   return hold_timers[record->event.key.row][record->event.key.col]
@@ -119,31 +124,38 @@ bool is_tap (keyrecord_t *record) {
 }
 
 // 長押しと単押しでキーを変更する
-void mod_tap_action(keyrecord_t *record, uint8_t mod, void (*cb)(void)) {
+void separate_tap_hold(keyrecord_t *record, uint8_t hold, void (*cb)(void)) {
   if (record->event.pressed) {
-    add_mods(MOD_BIT(mod));
+    // add_mods(MOD_BIT(hold));
+    key_pressed[record->event.key.row][record->event.key.col] = true;
+    register_code(hold);
   } else {
-    if (is_tap(record)) {
-      del_mods(MOD_BIT(mod));
+    unregister_code(hold);
+    // if (is_tap(record)) {
+    if (is_pressed(record)&& is_tap(record)) {
       cb();
-    } else {
-      unregister_code(mod);
+    // } else {
+    //   unregister_code(hold);
     }
+    key_pressed[record->event.key.row][record->event.key.col] = false;
   }
 }
 
 // 長押しでレイヤー移動、単押しでキー入力
 void my_LT(keyrecord_t *record, uint8_t layer, uint8_t tap) {
   if (record->event.pressed) {
-    layer_pressed[layer] = true;
+    // layer_pressed[layer] = true;
+    key_pressed[record->event.key.row][record->event.key.col] = true;
     layer_on(layer);
   } else {
     layer_off(layer);
-    if (layer_pressed[layer] && is_tap(record)) {
+    // if (layer_pressed[layer] && is_tap(record)) {
+    if (is_pressed(record)&& is_tap(record)) {
       register_code(tap);
       unregister_code(tap);
     }
-    layer_pressed[layer] = false;
+    // layer_pressed[layer] = false;
+    key_pressed[record->event.key.row][record->event.key.col] = false;
   }
 }
 
@@ -196,11 +208,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         break;
     #endif
     case CK_C_CAPS:     // 長押し"Ctrl", 単押し"CapsLock"
-      mod_tap_action(record, KC_LCTL, set_caps);
+      separate_tap_hold(record, KC_LCTL, set_caps);
       result = false;
       break;
     case CK_SPC_MHN:    // 長押し"Space", 単押し"無変換"
-      mod_tap_action(record, KC_LCTL, set_mhen);
+      separate_tap_hold(record, KC_LCTL, set_mhen);
       result = false;
       break;
     case CK_SBL_SPC:    // 長押し"_SYMBOL"レイヤー, 単押し"Space"
