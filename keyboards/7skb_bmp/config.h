@@ -22,10 +22,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "apidef.h"
 
 /* USB Device descriptor parameter */
-#define VENDOR_ID       0x0000
-#define PRODUCT_ID      0x0000
+#define VENDOR_ID       0x04D8
+#define PRODUCT_ID      0xEB5F
 #define DEVICE_VER      0x0001
-#define MANUFACTURER    sekigon-gonnoc
+#define MANUFACTURER    Salicylic_Acid
 #define PRODUCT         7skb_bmp
 #define DESCRIPTION     A development board for wireless split keyboards
 
@@ -38,10 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TAPPING_TERM 200
 
 /* key matrix size */
-#define MATRIX_ROWS_DEFAULT 1
-#define MATRIX_COLS_DEFAULT 19
-#define THIS_DEVICE_ROWS 1
-#define THIS_DEVICE_COLS 19
+#define MATRIX_ROWS_DEFAULT 10
+#define MATRIX_COLS_DEFAULT 8
+#define THIS_DEVICE_ROWS 5
+#define THIS_DEVICE_COLS 8
 
 /*
  * Enable mass storage when the switch connected following pins is pushed on boot.
@@ -60,9 +60,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *                  ROW2COL = ROW = Anode (+), COL = Cathode (-, marked on diode)
  *
 */
-#define MATRIX_ROW_PINS { 33 } // Dummy
-#define MATRIX_COL_PINS {1,2,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22}
-#define MATRIX_LAYOUT {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,255}
+#define MATRIX_ROW_PINS { 7, 8, 9, 10, 11 }
+#define MATRIX_COL_PINS { 20, 19, 18, 17, 16, 15, 14, 12 }
+#define MATRIX_LAYOUT { \
+      1,  2,  3,  4,  5,  6,    41, 42, 43, 44, 45, 46, 47, 48, 56,  0, \
+      9, 10, 11, 12, 13, 14,    49, 50, 51, 52, 53, 54, 55, 64,  0, \
+     17, 18, 19, 20, 21, 22,    57, 58, 59, 60, 61, 62, 63,  0, \
+     25, 26, 27, 28, 29, 30,    65, 66, 67, 68, 69, 70, 71,  0, \
+         34, 35, 36, 37,        73, 74,     76, 77 \
+    }
 
 #define KEYMAP_PRIOR_LOCALE 0
 #define KEYMAP_ASCII 0

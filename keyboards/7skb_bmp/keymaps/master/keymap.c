@@ -20,33 +20,43 @@
 
 // Defines the keycodes used by our macros in process_record_user
 enum custom_keycodes {
-    LOWER = BMP_SAFE_RANGE,
-    RAISE,
+  CUSTOM_KEYCODE_START = BMP_SAFE_RANGE,
 };
 
 const key_string_map_t custom_keys_user =
 {
-    .start_kc = LOWER,
-    .end_kc = RAISE,
-    .key_strings = "LOWER\0RAISE\0"
+  .start_kc = CUSTOM_KEYCODE_START,
+  .end_kc= CUSTOM_KEYCODE_START,
+  .key_strings = "\0"
 };
 
 enum layers {
-    _QWERTY, _SYMBOL, _ARROW, _NUM
+  _QWERTY, _SYMBOL, _ARROW, _NUM
 };
+
+// ショートカット
+#define sPAUSE LCA(KC_P)      // Ctrl+Alt+P     最前面でポーズ
+#define sCAHOME LCA(KC_HOME)  // Ctrl+Alt+HOME  リモートの接続バーを表示
+// 拡張キーコード
+// #define TH_CAPS EX(TDH(LSFT(KC_CAPS),KC_LCTL))
+// #define TH_MHEN EX(TDH(KC_MHEN,KC_SPC))
+// #define LT_SMBL EX(LTE(_SYMBOL,KC_SPC))
+// #define LT_AROW EX(LTE(_ARROW,KC_ENT))
+#define LT_SMBL LT(_SYMBOL,KC_SPC)
+#define LT_AROW LT(_ARROW,KC_ENT)
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [_QWERTY] = LAYOUT(
   //,-----------------------------------------------------|   |--------------------------------------------------------------------------------.
-       KC_GRV,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_HOME,    KC_P, XXXXXXX, KC_BSPC,
+      KC_ZKHK,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0, sCAHOME,  sPAUSE, XXXXXXX, KC_BSPC,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------+--------|
        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_LBRC, KC_RBRC, KC_JYEN,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------|
-      KC_CAPS,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,        KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,  KC_ENT,
+     KC_LCTRL,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,        KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,  KC_ENT,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------|
       KC_LSFT,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_RSFT,  KC_DEL,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------|
-               KC_LGUI, KC_LALT,MO(_NUM),MO(_NUM),MO(_NUM),    MO(_NUM),                   KC_RALT,  KC_APP
+               KC_LGUI, KC_LALT, KC_MHEN, LT_SMBL,              LT_AROW,MO(_NUM),          KC_RALT,  KC_APP
           //`---------------------------------------------|   |--------------------------------------------'
   ),
 
@@ -80,7 +90,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_NUM] = LAYOUT(
   //,-----------------------------------------------------|   |--------------------------------------------------------------------------------.
-       KC_ESC, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MPRV, KC_PAUS, KC_MNXT, _______,
+     KC_ESC, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_MPRV, KC_PAUS, KC_MNXT, _______,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------+--------|
       _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,      KC_TAB,   KC_P7,   KC_P8,   KC_P9, KC_PSLS, KC_PAST, XXXXXXX, KC_MPLY,
   //|--------+--------+--------+--------+--------+--------|   |--------+--------+--------+--------+--------+--------+--------+--------|
@@ -94,40 +104,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 uint32_t keymaps_len() {
-  return 19;
+  return sizeof(keymaps)/sizeof(uint16_t);
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   bool continue_process = process_record_user_bmp(keycode, record);
+  bool result = false;
   if (continue_process == false)
   {
-    return false;
+  return false;
   }
 
   switch (keycode) {
-    // case LOWER:
-    //   if (record->event.pressed) {
-    //     layer_on(_LOWER);
-    //     update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    //   } else {
-    //     layer_off(_LOWER);
-    //     update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    //   }
-    //   return false;
-    //   break;
-    // case RAISE:
-    //   if (record->event.pressed) {
-    //     layer_on(_RAISE);
-    //     update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    //   } else {
-    //     layer_off(_RAISE);
-    //     update_tri_layer(_LOWER, _RAISE, _ADJUST);
-    //   }
-    //   return false;
-    //   break;
-    default:
-      break;
+  default:
+    result = true;
+    break;
   }
 
-  return true;
+  return result;
 }
+
+void matrix_init_user(void) {}
+
+void matrix_scan_user(void) {}
+
+void led_set_user(uint8_t usb_led) {}
